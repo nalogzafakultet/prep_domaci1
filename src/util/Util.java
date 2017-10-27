@@ -2,6 +2,7 @@ package util;
 
 import java.io.File;
 
+import new_hmwrk.MainFrame;
 import wav.WavFile;
 
 public class Util {
@@ -18,6 +19,7 @@ public class Util {
 		try {
 			WavFile wavFile = WavFile.openWavFile(new File(fileName));
 			int samplingRate = (int) wavFile.getSampleRate();
+			MainFrame.setSampleRate(samplingRate);
 			int numberOfChannels = wavFile.getNumChannels();
 			
 			int requiredWindowSize = (int) Math.ceil((samplingRate * 1.0 / (1000/miliseconds)));

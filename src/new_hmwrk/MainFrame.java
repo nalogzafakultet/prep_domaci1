@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import javax.swing.BoxLayout;
@@ -46,6 +47,7 @@ public class MainFrame extends JFrame {
 	private int windowFunction = 0;
 	private JTextField wnTextField;
 	private JTextField wsTextField;
+	private static int sampleRate;
 
 	private void fillScores(double arr[]) {
 		this.scores = new ArrayList<>();
@@ -229,9 +231,17 @@ public class MainFrame extends JFrame {
 			scores.add(0.0);
 			
 			System.out.println("scores: " + scores);
+			gv.setSampleRate(sampleRate);
 			gv.setArr(arr);
+			gv.setWindowSize(windowSize);
+			gv.setStep(len / 16);
 			gv.setFirst_element(1);
 			gv.setLast_element(len / 2 - 1);
+			
+			System.out.println("arr: " + Arrays.toString(arr));
+			System.out.println("window size: " + windowSize);
+			System.out.println("step: " + (len/16));
+			System.out.println("last: " + (len / 2 - 1));
 			
 			
 			gv.setScores(scores);
@@ -274,7 +284,11 @@ public class MainFrame extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
 	}
-
+	
+	public static void setSampleRate(int sampleRate) {
+		MainFrame.sampleRate = sampleRate;
+	}
+	
 	public static MainFrame getInstance() {
 		if (instance == null)
 			instance = new MainFrame();

@@ -38,6 +38,9 @@ public class GraphView extends JPanel {
 	private int last_element;
 	private int step;
 	private double[] arr;
+	private int sampleRate;
+	
+	
 
 	public GraphView(List<Double> scores) {
 		this.scores = scores;
@@ -87,6 +90,9 @@ public class GraphView extends JPanel {
 		}
 
 		// and for x axis
+		// 1000 / windowSize (50) = hertz = 20Hz -> najsporiji
+		// 22 * windowSize = najbrzi = 22000
+		// 
 		for (int i = 0; i < scores.size() - 1; i++) {
 			if (scores.size() > 1) {
 				int x0 = i * (getWidth() - padding * 2 - labelPadding) / (scores.size() - 1) + padding + labelPadding;
@@ -99,6 +105,7 @@ public class GraphView extends JPanel {
 					g2.drawLine(x0, getHeight() - padding - labelPadding - 1 - pointWidth, x1, padding);
 					g2.setColor(Color.BLACK);
 					String xLabel;
+					
 					if (i < 1000)
 						xLabel = i+1 + "Hz";
 					else
@@ -162,6 +169,10 @@ public class GraphView extends JPanel {
 			minScore = Math.min(minScore, score);
 		}
 		return minScore;
+	}
+	
+	public void setSampleRate(int sampleRate) {
+		this.sampleRate = sampleRate;
 	}
 
 	private double getMaxScore() {
