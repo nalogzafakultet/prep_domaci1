@@ -78,7 +78,6 @@ public class GraphView extends JPanel {
 				g2.setColor(Color.BLACK);
 				String yLabel = ((int) ((getMinScore()
 						+ (getMaxScore() - getMinScore()) * ((i * 1.0) / numberYDivisions)) * 100)) / 100.0 + "";
-				// String yLabel = ((int) (((i * 1.0) / numberYDivisions)) * 100) / 100.0 + "";
 
 				FontMetrics metrics = g2.getFontMetrics();
 				int labelWidth = metrics.stringWidth(yLabel);
@@ -88,9 +87,10 @@ public class GraphView extends JPanel {
 		}
 
 		// and for x axis
-		for (int i = 0; i < scores.size(); i++) {
+		for (int i = 0; i < scores.size() - 1; i++) {
 			if (scores.size() > 1) {
 				int x0 = i * (getWidth() - padding * 2 - labelPadding) / (scores.size() - 1) + padding + labelPadding;
+				int x2 = (i+1) * (getWidth() - padding * 2 - labelPadding) / (scores.size() - 1) + padding + labelPadding;
 				int x1 = x0;
 				int y0 = getHeight() - padding - labelPadding;
 				int y1 = y0 - pointWidth;
@@ -100,12 +100,13 @@ public class GraphView extends JPanel {
 					g2.setColor(Color.BLACK);
 					String xLabel;
 					if (i < 1000)
-						xLabel = i+1 + "";
+						xLabel = i+1 + "Hz";
 					else
-						xLabel = i / 1000 + "k";
+						xLabel = i / 1000 + "kHz";
 					FontMetrics metrics = g2.getFontMetrics();
 					int labelWidth = metrics.stringWidth(xLabel);
-					g2.drawString(xLabel, x0 - labelWidth / 2, y0 + metrics.getHeight() + 3);
+//					g2.drawString(xLabel, x0 - labelWidth / 2, y0 + metrics.getHeight() + 3);
+					g2.drawString(xLabel, x0 + (x2-x0)/2 - labelWidth, y0 + metrics.getHeight() + 3);
 				}
 				g2.drawLine(x0, y0, x1, y1);
 			}

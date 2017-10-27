@@ -196,39 +196,18 @@ public class MainFrame extends JFrame {
 			// Math.sqrt(arr[i]^2 + imag[i]^2)
 			Fft.getFourier(arr, imag);
 			int len = arr.length;
-			double first = arr[1];
-			double last = arr[len / 2];
 
 			System.out.println("Gotov FFT");
 
-			// scores.add(first);
-			// this.scores = new ArrayList<>();
-			// for (int i = 1 + len / 16; i < arr.length / 2; i += (len/16)) {
-			// scores.add(arr[i]);
-			// }
-			// scores.add(last);
 
 			// Scaling ampls
 			double[] copy = new double[arr.length];
 			double minVal = Double.MAX_VALUE;
 			double maxVal = Double.MIN_VALUE;
 
-			// arr[i] : max - min = x : 100
-//			double minVal = Double.MAX_VALUE;
-//			double maxVal = Double.MIN_VALUE;
-//
-//			for (int i = 1; i < arr.length; i++) {
-//				if (arr[i] < minVal)
-//					minVal = arr[i];
-//				if (arr[i] > maxVal)
-//					maxVal = arr[i];
-//			}
-
 			for (int i = 1; i < copy.length; i++) {
 				copy[i] = arr[i];
 			}
-
-
 			ArrayList<Double> scoresCopy = new ArrayList<>();
 			scoresCopy = new ArrayList<>();
 			scoresCopy.add(copy[1]);
@@ -243,9 +222,11 @@ public class MainFrame extends JFrame {
 			if (copy[len / 2 - 1] < minVal) minVal = copy[len / 2 - 1];
 			if (copy[len / 2 - 1] > maxVal) maxVal = copy[len / 2 - 1];
 			
+			scores = new ArrayList<>();
 			for (int i = 0; i < scoresCopy.size(); i++) {
 				scores.add(Math.floor((scoresCopy.get(i) * 100.0) / (maxVal - minVal)));
 			}
+			scores.add(0.0);
 			
 			System.out.println("scores: " + scores);
 			gv.setArr(arr);
@@ -276,12 +257,6 @@ public class MainFrame extends JFrame {
 		JButton bSearch = new JButton("Search");
 
 		bSearch.addActionListener(e -> {
-			// fillScores();
-			gv.setScores(scores);
-			jp.revalidate();
-			jp.repaint();
-			gv.revalidate();
-			gv.repaint();
 
 		});
 
