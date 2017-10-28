@@ -110,7 +110,6 @@ public final class Fft {
 		for (int i = 1; i < real.length; i++) {
 			real[i] = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
 		}
-		System.out.println("Done,");
 	}
 	
 	

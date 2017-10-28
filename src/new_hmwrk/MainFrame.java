@@ -10,6 +10,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +32,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import main.Fft;
 import util.Util;
 import util.WindowFunctions;
+import wav.WavFile;
+import wav.WavFileException;
 
 public class MainFrame extends JFrame {
 
@@ -50,6 +53,7 @@ public class MainFrame extends JFrame {
 	private static int sampleRate;
 	private int windowSize;
 	private int windowNumber;
+	private int numOfChannels;
 	
 	private double arr[];
 
@@ -176,6 +180,20 @@ public class MainFrame extends JFrame {
 			windowSize = Integer.parseInt(wsTextField.getText());
 
 			arr = Util.readWindow(file.getAbsolutePath(), windowNumber, windowSize);
+			
+			try {
+				WavFile wav = WavFile.openWavFile(file);
+				numOfChannels = wav.getNumChannels();
+				System.out.println("CHANNEL NUM: " + numOfChannels);
+				sampleRate = (int) wav.getSampleRate();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (WavFileException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
 
 			double[] imag = new double[arr.length];
 			int arrSize;
@@ -203,7 +221,6 @@ public class MainFrame extends JFrame {
 			Fft.getFourier(arr, imag);
 			int len = arr.length;
 
-			System.out.println("Gotov FFT");
 
 
 			// Scaling ampls
@@ -224,19 +241,22 @@ public class MainFrame extends JFrame {
 			if (copy[1] > maxVal) maxVal = copy[1];
 			
 			int step = (int) Math.ceil((len / 16));
+			System.out.println("ARR SIZE: " + arr.length);
+			System.out.println("step: " + step);
 			
-			for (int i = 1 + len / 16; i < arr.length / 2; i += step) {
+			for (int i = 1 + len / 16; i < (arr.length / 2); i += step) {
+				
 				if (copy[i] < minVal) minVal = copy[i];
 				if (copy[i] > maxVal) maxVal = copy[i];
 				scoresCopy.add(copy[i]);
 				
 				if (i * startingFreq > 1000) {
-					xLabels.add(((i * startingFreq) / 1000) + "kHz");
+					xLabels.add(((((i / numOfChannels)* startingFreq) / 100.0) / 10) + "kHz");
 				} else {
-					xLabels.add((i * startingFreq) + "Hz");
+					xLabels.add(((i / numOfChannels) * startingFreq) + "Hz");
 				}
 			}
-			xLabels.add((((len/2 - 1) * startingFreq) / 1000) + "kHz");
+			xLabels.add((((len/2 - 1) * startingFreq / numOfChannels) / 1000) + "kHz");
 			scoresCopy.add(copy[len / 2 - 1]);
 			if (copy[len / 2 - 1] < minVal) minVal = copy[len / 2 - 1];
 			if (copy[len / 2 - 1] > maxVal) maxVal = copy[len / 2 - 1];
@@ -245,10 +265,12 @@ public class MainFrame extends JFrame {
 			
 			scores = new ArrayList<>();
 			for (int i = 0; i < scoresCopy.size(); i++) {
-				scores.add(Math.floor((scoresCopy.get(i) * 100.0) / (maxVal - minVal)));
+				scores.add(Math.floor(((scoresCopy.get(i) - minVal) * 100.0) / (maxVal - minVal)));
 			}
 			
-			System.out.println("scores: " + scores);
+			System.out.println("SCORES: " + scores);
+			System.out.println("XLABELS: " + xLabels);
+			
 			gv.setSampleRate(sampleRate);
 			gv.setArr(arr);
 			gv.setWindowSize(windowSize);
@@ -256,10 +278,6 @@ public class MainFrame extends JFrame {
 			gv.setFirst_element(1);
 			gv.setLast_element(len / 2 - 1);
 			
-			System.out.println("arr: " + Arrays.toString(arr));
-			System.out.println("window size: " + windowSize);
-			System.out.println("step: " + (len/16));
-			System.out.println("last: " + (len / 2 - 1));
 			
 			
 			gv.setScores(scores);
@@ -292,8 +310,10 @@ public class MainFrame extends JFrame {
 			int toFreq = Integer.parseInt(tfTo.getText());
 			int lowest_freq = 1000 / windowSize;
 			
-			int fromPtr = fromFreq / lowest_freq;
-			int toPtr = toFreq / lowest_freq;
+			
+			
+			int fromPtr = fromFreq * numOfChannels / lowest_freq;
+			int toPtr = toFreq * numOfChannels / lowest_freq;
 
 			ArrayList<String> xLabels = new ArrayList<>();
 			ArrayList<Double> scoresCopy = new ArrayList<>();
@@ -304,13 +324,18 @@ public class MainFrame extends JFrame {
 			if (arr[fromPtr] < minVal) minVal = arr[fromPtr];
 			
 			if (lowest_freq * fromPtr > 1000) {
-				xLabels.add(((lowest_freq * fromPtr) / 1000) + "kHz");
+				xLabels.add((((lowest_freq * fromPtr / numOfChannels) / 100.0) / 10) + "kHz");
 			} else {
-				xLabels.add((lowest_freq * fromPtr) + "Hz");
+				xLabels.add((lowest_freq * fromPtr / numOfChannels) + "Hz");
 			}
 			
 			int num_of_samples = toPtr - fromPtr - 1;
 			int step = (int) Math.ceil(num_of_samples / 8);
+			
+			System.out.println("ARR SIZE: " + arr.length);
+			System.out.println("NUM OF SAMPLES: " + num_of_samples);
+			
+			System.out.println("FROM: " + fromPtr + ", TO: " + toPtr);
 			
 			
 			for (int i = fromPtr + step; i < toPtr; i += step) {
@@ -319,24 +344,24 @@ public class MainFrame extends JFrame {
 				if (arr[i] < minVal) minVal = arr[i];
 				
 				if (lowest_freq * fromPtr > 1000) {
-					xLabels.add(((lowest_freq * i) / 1000) + "kHz");
+					xLabels.add(((lowest_freq / numOfChannels * i) / 1000) + "kHz");
 				} else {
-					xLabels.add((lowest_freq * i) + "Hz");
+					xLabels.add((lowest_freq / numOfChannels * i) + "Hz");
 				}
 			}
 			scoresCopy.add(arr[toPtr]);
 			if (arr[toPtr] > maxVal) maxVal = arr[toPtr];
 			if (arr[toPtr] < minVal) minVal = arr[toPtr];
 			if (lowest_freq * toPtr > 1000) {
-				xLabels.add(((lowest_freq * toPtr) / 1000) + "kHz");
+				xLabels.add(((lowest_freq / numOfChannels* (toPtr)) / 1000) + "kHz");
 			} else {
-				xLabels.add((lowest_freq * toPtr) + "Hz");
+				xLabels.add((lowest_freq / numOfChannels * (toPtr)) + "Hz");
 			}
 			
 			
 			scores = new ArrayList<>();
 			for (int i = 0; i < scoresCopy.size(); i++) {
-				scores.add(Math.floor((scoresCopy.get(i) * 100.0) / (maxVal - minVal)));
+				scores.add(Math.floor(((scoresCopy.get(i) - minVal) * 100.0) / (maxVal - minVal)));
 			}
 			System.out.println("MAX: " + maxVal);
 			System.out.println("MIN: " + minVal);
