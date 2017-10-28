@@ -35,7 +35,7 @@ import util.WindowFunctions;
 public class MainFrame extends JFrame {
 
 	private static MainFrame instance;
-	private GraphView gv;
+	private HistogramView gv;
 
 	private ArrayList<Double> scores = new ArrayList<>();
 	private Random random;
@@ -48,6 +48,10 @@ public class MainFrame extends JFrame {
 	private JTextField wnTextField;
 	private JTextField wsTextField;
 	private static int sampleRate;
+	private int windowSize;
+	private int windowNumber;
+	
+	private double arr[];
 
 	private void fillScores(double arr[]) {
 		this.scores = new ArrayList<>();
@@ -168,10 +172,10 @@ public class MainFrame extends JFrame {
 						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			int windowNumber = Integer.parseInt(wnTextField.getText());
-			int windowSize = Integer.parseInt(wsTextField.getText());
+			windowNumber = Integer.parseInt(wnTextField.getText());
+			windowSize = Integer.parseInt(wsTextField.getText());
 
-			double[] arr = Util.readWindow(file.getAbsolutePath(), windowNumber, windowSize);
+			arr = Util.readWindow(file.getAbsolutePath(), windowNumber, windowSize);
 
 			double[] imag = new double[arr.length];
 			int arrSize;
@@ -182,13 +186,13 @@ public class MainFrame extends JFrame {
 			case 1:
 				arrSize = arr.length;
 				for (int i = 0; i < arrSize; i++) {
-					arr[i] = WindowFunctions.hamming(arr[i], arrSize);
+					arr[i] *= WindowFunctions.hamming(i, arrSize);
 				}
 				break;
 			case 2:
 				arrSize = arr.length;
 				for (int i = 0; i < arrSize; i++) {
-					arr[i] = WindowFunctions.hanning(arr[i], arrSize);
+					arr[i] *= WindowFunctions.hanning(i, arrSize);
 				}
 				break;
 			default:
@@ -211,24 +215,38 @@ public class MainFrame extends JFrame {
 				copy[i] = arr[i];
 			}
 			ArrayList<Double> scoresCopy = new ArrayList<>();
+			ArrayList<String> xLabels = new ArrayList<>();
 			scoresCopy = new ArrayList<>();
 			scoresCopy.add(copy[1]);
+			int startingFreq = 1000/windowSize;
+			xLabels.add(startingFreq + "Hz");
 			if (copy[1] < minVal) minVal = copy[1];
 			if (copy[1] > maxVal) maxVal = copy[1];
-			for (int i = 1 + len / 16; i < arr.length / 2; i += (len / 16)) {
+			
+			int step = (int) Math.ceil((len / 16));
+			
+			for (int i = 1 + len / 16; i < arr.length / 2; i += step) {
 				if (copy[i] < minVal) minVal = copy[i];
 				if (copy[i] > maxVal) maxVal = copy[i];
 				scoresCopy.add(copy[i]);
+				
+				if (i * startingFreq > 1000) {
+					xLabels.add(((i * startingFreq) / 1000) + "kHz");
+				} else {
+					xLabels.add((i * startingFreq) + "Hz");
+				}
 			}
+			xLabels.add((((len/2 - 1) * startingFreq) / 1000) + "kHz");
 			scoresCopy.add(copy[len / 2 - 1]);
 			if (copy[len / 2 - 1] < minVal) minVal = copy[len / 2 - 1];
 			if (copy[len / 2 - 1] > maxVal) maxVal = copy[len / 2 - 1];
+			
+			gv.setxLabels(xLabels);
 			
 			scores = new ArrayList<>();
 			for (int i = 0; i < scoresCopy.size(); i++) {
 				scores.add(Math.floor((scoresCopy.get(i) * 100.0) / (maxVal - minVal)));
 			}
-			scores.add(0.0);
 			
 			System.out.println("scores: " + scores);
 			gv.setSampleRate(sampleRate);
@@ -254,20 +272,89 @@ public class MainFrame extends JFrame {
 		jp.add(wavForm);
 
 		// fillScores();
-		gv = new GraphView(scores);
+		gv = new HistogramView(scores);
 		gv.setPreferredSize(new Dimension(600, 600));
 		jp.add(gv);
 
 		JPanel searchPane = new JPanel();
 		searchPane.setLayout(new FlowLayout(FlowLayout.CENTER));
-		JLabel lFrom = new JLabel("From (frame):");
-		JTextField tfFrom = new JTextField(6);
-		JLabel lTo = new JLabel("To (frame):");
-		JTextField tfTo = new JTextField(6);
+		JLabel lFrom = new JLabel("From (freq):");
+		JTextField tfFrom = new JTextField(10);
+		JLabel lTo = new JLabel("To (freq):");
+		JTextField tfTo = new JTextField(10);
 		JButton bSearch = new JButton("Search");
 
 		bSearch.addActionListener(e -> {
+			
+			double minVal = Double.MAX_VALUE;
+			double maxVal = Double.MIN_VALUE;
+			int fromFreq = Integer.parseInt(tfFrom.getText());
+			int toFreq = Integer.parseInt(tfTo.getText());
+			int lowest_freq = 1000 / windowSize;
+			
+			int fromPtr = fromFreq / lowest_freq;
+			int toPtr = toFreq / lowest_freq;
 
+			ArrayList<String> xLabels = new ArrayList<>();
+			ArrayList<Double> scoresCopy = new ArrayList<>();
+			scores = new ArrayList<>();
+			scoresCopy.add(arr[fromPtr]);
+			
+			if (arr[fromPtr] > maxVal) maxVal = arr[fromPtr];
+			if (arr[fromPtr] < minVal) minVal = arr[fromPtr];
+			
+			if (lowest_freq * fromPtr > 1000) {
+				xLabels.add(((lowest_freq * fromPtr) / 1000) + "kHz");
+			} else {
+				xLabels.add((lowest_freq * fromPtr) + "Hz");
+			}
+			
+			int num_of_samples = toPtr - fromPtr - 1;
+			int step = (int) Math.ceil(num_of_samples / 8);
+			
+			
+			for (int i = fromPtr + step; i < toPtr; i += step) {
+				scoresCopy.add(arr[i]);
+				if (arr[i] > maxVal) maxVal = arr[i];
+				if (arr[i] < minVal) minVal = arr[i];
+				
+				if (lowest_freq * fromPtr > 1000) {
+					xLabels.add(((lowest_freq * i) / 1000) + "kHz");
+				} else {
+					xLabels.add((lowest_freq * i) + "Hz");
+				}
+			}
+			scoresCopy.add(arr[toPtr]);
+			if (arr[toPtr] > maxVal) maxVal = arr[toPtr];
+			if (arr[toPtr] < minVal) minVal = arr[toPtr];
+			if (lowest_freq * toPtr > 1000) {
+				xLabels.add(((lowest_freq * toPtr) / 1000) + "kHz");
+			} else {
+				xLabels.add((lowest_freq * toPtr) + "Hz");
+			}
+			
+			
+			scores = new ArrayList<>();
+			for (int i = 0; i < scoresCopy.size(); i++) {
+				scores.add(Math.floor((scoresCopy.get(i) * 100.0) / (maxVal - minVal)));
+			}
+			System.out.println("MAX: " + maxVal);
+			System.out.println("MIN: " + minVal);
+			
+			
+			gv.setxLabels(xLabels);
+			
+			gv.setStep(step);
+			gv.setFirst_element(fromPtr);
+			gv.setLast_element(toPtr);
+			gv.setScores(scores);
+			
+			jp.revalidate();
+			jp.repaint();
+			gv.revalidate();
+			gv.repaint();
+			
+			
 		});
 
 		searchPane.add(lFrom);

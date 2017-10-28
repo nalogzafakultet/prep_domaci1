@@ -20,7 +20,7 @@ import main.Fft;
 import util.Util;
 import wav.WavFile;
 
-public class GraphView extends JPanel {
+public class HistogramView extends JPanel {
 	// private WavFile wavFile;
 	// private int width = 800;
 	// private int heigth = 400;
@@ -39,10 +39,11 @@ public class GraphView extends JPanel {
 	private int step;
 	private double[] arr;
 	private int sampleRate;
+	private ArrayList<String> xLabels;
 	
 	
 
-	public GraphView(List<Double> scores) {
+	public HistogramView(List<Double> scores) {
 		this.scores = scores;
 	}
 
@@ -106,10 +107,7 @@ public class GraphView extends JPanel {
 					g2.setColor(Color.BLACK);
 					String xLabel;
 					
-					if (i < 1000)
-						xLabel = i+1 + "Hz";
-					else
-						xLabel = i / 1000 + "kHz";
+					xLabel = xLabels.get(i);
 					FontMetrics metrics = g2.getFontMetrics();
 					int labelWidth = metrics.stringWidth(xLabel);
 //					g2.drawString(xLabel, x0 - labelWidth / 2, y0 + metrics.getHeight() + 3);
@@ -173,6 +171,10 @@ public class GraphView extends JPanel {
 	
 	public void setSampleRate(int sampleRate) {
 		this.sampleRate = sampleRate;
+	}
+	
+	public void setxLabels(ArrayList<String> xLabels) {
+		this.xLabels = xLabels;
 	}
 
 	private double getMaxScore() {
