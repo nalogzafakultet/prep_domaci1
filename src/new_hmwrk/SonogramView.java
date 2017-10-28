@@ -2,7 +2,6 @@ package new_hmwrk;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -10,15 +9,12 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JFrame;
 import javax.swing.JPanel;
-
-import wav.WavFile;
-import wav.WavFileException;
 
 public class SonogramView extends JPanel {
 	private int padding = 25;
@@ -27,10 +23,12 @@ public class SonogramView extends JPanel {
 	private Color pointColor = new Color(100, 100, 100, 180);
 	private Color gridColor = new Color(200, 200, 200, 200);
 	private static final Stroke GRAPH_STROKE = new BasicStroke(2f);
-	private int pointWidth = 3;
+	private int pointWidth = 10;
 	private int numberYDivisions = 10;
 	private ArrayList<ArrayList<Pair>> scores;
 	private int windowSize;
+	private double minScore = Double.MAX_VALUE;
+	private double maxScore = Double.MIN_VALUE;
 
 	private ArrayList<String> yLabels;
 
@@ -45,8 +43,9 @@ public class SonogramView extends JPanel {
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		double xScale = ((double) getWidth() - (2 * padding) - labelPadding) / (scores.size() - 1);
-		double yScale = ((double) getHeight() - 2 * padding - labelPadding) / (100);
+		double yScale = ((double) getHeight() - 2 * padding - labelPadding) / (getMaxScore() - getMinScore());
 		
+		System.out.println("YSCALE" + yScale);
 		
 
 		List<List<Point>> graphPoints = new ArrayList<>();
@@ -54,7 +53,7 @@ public class SonogramView extends JPanel {
 			graphPoints.add(new ArrayList<>());
 			for (int j = 0; j < scores.get(i).size(); j++) {
 				int x1 = (int) (i * xScale + padding + labelPadding);
-				int y1 = (int) (100 - scores.get(i).get(j).frequency * yScale + padding);
+				int y1 = (int) (getMaxScore()*yScale - scores.get(i).get(j).frequency * yScale + padding);
 				graphPoints.get(i).add(new Point(x1, y1));
 			}
 		}
@@ -72,16 +71,15 @@ public class SonogramView extends JPanel {
 			int y0 = getHeight()
 					- ((i * (getHeight() - padding * 2 - labelPadding)) / numberYDivisions + padding + labelPadding);
 			int y1 = y0;
-			if (scores.size() >= 0) {
+			if (scores.size() > 0) {
 				g2.setColor(gridColor);
 				g2.drawLine(padding + labelPadding + 1 + pointWidth, y0, getWidth() - padding, y1);
 				g2.setColor(Color.BLACK);
 
-				// String yLabel = ((int) ((getMinScore() + (getMaxScore() - getMinScore()) *
-				// ((i * 1.0) / numberYDivisions)) * 100)) / 100.0 + "";
+				String yLabel = ((int) ((getMinScore() + (getMaxScore() - getMinScore()) * ((i * 1.0) / numberYDivisions)) * 100)) / 100 + "";
 				
 
-				String yLabel = ((int) (((i * 1.0) / numberYDivisions)) * 100) / 100 + "";
+//				String yLabel = ((int) (((i * 1.0) / numberYDivisions)) * 100) / 100 + "";
 
 				FontMetrics metrics = g2.getFontMetrics();
 				int labelWidth = metrics.stringWidth(yLabel);
@@ -123,17 +121,27 @@ public class SonogramView extends JPanel {
 
 		g2.setStroke(oldStroke);
 		g2.setColor(pointColor);
+		PrintWriter pw = null;
+		try {
+			pw = new PrintWriter(new File("output-colors.log"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		for (int i = 0; i < graphPoints.size(); i++) {
 			for (int j = 0; j < graphPoints.get(i).size(); j++) {
 				int x = graphPoints.get(i).get(j).x - pointWidth / 2;
 				int y = graphPoints.get(i).get(j).y - pointWidth / 2;
 				int ovalW = pointWidth;
 				int ovalH = pointWidth;
-				 int proportion = (int) (scores.get(i).get(j).magnitude * 255 / 100);
+				int proportion = 255 - ((int) (scores.get(i).get(j).magnitude * 255 / 100));
+				pw.print("[" + x + "," + y + "]");
 				g2.setColor(new Color(proportion, proportion, proportion));
 				g2.fillOval(x, y, ovalW, ovalH);
 			}
+			pw.println();
 		}
+		pw.close();
 
 	}
 
@@ -141,24 +149,20 @@ public class SonogramView extends JPanel {
 	// public Dimension getPreferredSize() {
 	// return new Dimension(width, heigth);
 	// }
+	
+	public void setMinScore(double minScore) {
+		this.minScore = minScore;
+	}
+	
+	public void setMaxScore(double maxScore) {
+		this.maxScore = maxScore;
+	}
 
-	private double getMinScore() {
-		double minScore = Double.MAX_VALUE;
-		for (int i = 0; i < scores.size(); i++) {
-			for (int j = 0; j < scores.get(i).size(); j++) {
-				minScore = Math.min(minScore, scores.get(i).get(j).frequency);
-			}
-		}
+	public double getMinScore() {
 		return minScore;
 	}
 
-	private double getMaxScore() {
-		double maxScore = Double.MIN_VALUE;
-		for (int i = 0; i < scores.size(); i++) {
-			for (int j = 0; j < scores.get(i).size(); j++) {
-				maxScore = Math.max(maxScore, scores.get(i).get(j).frequency);
-			}
-		}
+	public double getMaxScore() {
 		return maxScore;
 	}
 

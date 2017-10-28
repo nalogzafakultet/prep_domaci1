@@ -159,7 +159,6 @@ public class MainFrame2 extends JFrame {
 			
 
 			try {
-				PrintWriter pw = new PrintWriter(new File("output.log"));
 				WavFile wav = WavFile.openWavFile(file);
 				numOfChannels = wav.getNumChannels();
 				sampleRate = (int) wav.getSampleRate();
@@ -170,15 +169,18 @@ public class MainFrame2 extends JFrame {
 				int samples_per_window = (sampleRate / 1000 * windowSize * numOfChannels);
 				int minFreq = 1000 / windowSize;
 				
+				gv.setMaxScore(sampleRate / 2);
+				gv.setMinScore(minFreq);
+				
 				int total_windows = (int) Math.ceil((double) total_chunks / (sampleRate / 1000 * windowSize));
 				double[] arr = new double[samples_per_window];
 				
 				scores = new ArrayList<>();
 				System.out.println("Stigao ovde.");
 				
-				for (int i = 0; i <= total_windows; i++) {
+				for (int i = 0; i < total_windows; i++) {
 
-					arr = Util.readWindow(file.getAbsolutePath(), i+1, 5);
+					arr = Util.readWindow(file.getAbsolutePath(), i+1, windowSize);
 					double[] imag = new double[arr.length];
 					int arrSize;
 
@@ -193,7 +195,7 @@ public class MainFrame2 extends JFrame {
 						break;
 					case 2:
 						arrSize = arr.length;
-						for (int k = 0; i < arrSize; i++) {
+						for (int k = 0; k < arrSize; k++) {
 							arr[k] *= WindowFunctions.hanning(k, arrSize);
 						}
 						break;
@@ -208,7 +210,7 @@ public class MainFrame2 extends JFrame {
 					double maxVal = Double.MIN_VALUE;
 					
 					
-					for (int j = 1; j < arr.length / 2; j += numOfChannels) {
+					for (int j = 2; j < arr.length / 2; j += numOfChannels) {
 						if (arr[j] < minVal) minVal = arr[j];
 						if (arr[j] > maxVal) maxVal = arr[j];
 					}
@@ -216,18 +218,17 @@ public class MainFrame2 extends JFrame {
 					System.out.println("MIN: " + minVal + ", MAX: " + maxVal);
 					
 					scores.add(new ArrayList<Pair>());
-					for (int j = 1; j < arr.length / 2; j += numOfChannels) {
-						double freq = Math.round((j * 1.0 * minFreq / (sampleRate / 2)) * 100) / (samples_per_window / numOfChannels / 100);
+					for (int j = 2; j < arr.length / 2; j += numOfChannels) {
+						double freq = (j * minFreq) / numOfChannels;
 						double magn = Math.round(((arr[j] - minVal) * 100) / (maxVal - minVal));
 						Pair p = new Pair(freq, magn);
 						scores.get(i).add(p);
-						pw.print(p + " ");
 					}
-					pw.println();
 				}
-				pw.close();
-//				gv.setScores(scores);
-//				gv.setWindowSize(windowSize);
+				gv.setScores(scores);
+				gv.setWindowSize(windowSize);
+				System.out.println("MIN: " + gv.getMinScore());
+				System.out.println("MAX: " + gv.getMaxScore());
 				
 				System.out.println("CHANNEL NUM: " + numOfChannels);
 				
@@ -243,10 +244,10 @@ public class MainFrame2 extends JFrame {
 			}
 			
 
-//			jp.revalidate();
-//			jp.repaint();
-//			gv.revalidate();
-//			gv.repaint();
+			jp.revalidate();
+			jp.repaint();
+			gv.revalidate();
+			gv.repaint();
 		});
 
 		jp.add(wavForm);

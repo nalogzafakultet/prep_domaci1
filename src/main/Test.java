@@ -1,12 +1,9 @@
 package main;
 
+import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Arrays;
 
-import util.Util;
-import wav.ReadExample;
 import wav.WavFile;
 import wav.WavFileException;
 
@@ -27,7 +24,8 @@ public class Test {
 //		}
 //		pw.close();
 		
-		
+		Point p = new Point(5, 7);
+		System.out.println(p);
 		
 //		System.out.println("Num of channels: " + numOfChannels);
 //		System.out.println("Sample Rate: " + sampleRate);

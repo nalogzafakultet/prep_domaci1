@@ -16,6 +16,6 @@ public class Pair {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return this.frequency + "";
+		return this.magnitude + "";
 	}
 }

@@ -13,12 +13,12 @@ public class Main {
 		for (int i = 0; i < 30; i++) {
 			real[i] = Math.sin(2.0 * Math.PI * (i / 30.0));
 			real[i] += Math.sin(2.0 * Math.PI * (i / 15.0));
-			real[i] += Math.sin(2.0 * Math.PI * (i / 10.0));
+//			real[i] = Math.sin(2.0 * Math.PI * (i/7.5));
 			imag[i] = 0;
 		}
 		
 		for (int i = 0; i < 30; i++) {
-			real[i] = WindowFunctions.hamming(real[i], real.length);
+//			real[i] *= WindowFunctions.hamming(real[i], real.length);
 			imag[i] = 0;
 		}
 		
