@@ -1,9 +1,10 @@
 package util;
 
 import java.io.File;
+import java.io.IOException;
 
-import new_hmwrk.MainFrame;
 import wav.WavFile;
+import wav.WavFileException;
 
 public class Util {
 	
@@ -15,11 +16,76 @@ public class Util {
 		return array;
 	}
 	
+	public static double getMin(String fileName) {
+		
+		
+		double min = Double.MAX_VALUE;
+		
+
+		WavFile wavFile;
+		try {
+			wavFile = WavFile.openWavFile(new File(fileName));
+			int framesRead = 0;
+			int numChannels = wavFile.getNumChannels();
+			double[] buffer = new double[100 * numChannels];
+			do {
+				framesRead = wavFile.readFrames(buffer, 100);
+				for (int s=0 ; s<framesRead * numChannels ; s++)
+				{
+					if (buffer[s] < min) min = buffer[s];
+				}
+
+			} while (framesRead != 0);
+			
+			wavFile.close();
+			return min;
+			
+		} catch (IOException | WavFileException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+
+		return min;
+	}
+	
+public static double getMax(String fileName) {
+		
+		
+		double max = Double.MIN_VALUE;
+		
+
+		WavFile wavFile;
+		try {
+			wavFile = WavFile.openWavFile(new File(fileName));
+			int framesRead = 0;
+			int numChannels = wavFile.getNumChannels();
+			double[] buffer = new double[100 * numChannels];
+			do {
+				framesRead = wavFile.readFrames(buffer, 100);
+				for (int s=0 ; s<framesRead * numChannels ; s++)
+				{
+					if (buffer[s] > max) max = buffer[s];
+				}
+
+			} while (framesRead != 0);
+			
+			wavFile.close();
+			return max;
+			
+		} catch (IOException | WavFileException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+
+		return max;
+	}
+	
 	public static double[] readWindow(String fileName, int redniBroj, int miliseconds) {
 		try {
 			WavFile wavFile = WavFile.openWavFile(new File(fileName));
 			int samplingRate = (int) wavFile.getSampleRate();
-			MainFrame.setSampleRate(samplingRate);
 			int numberOfChannels = wavFile.getNumChannels();
 			
 			int requiredWindowSize = (int) Math.ceil((samplingRate * 1.0 / (1000/miliseconds)));
@@ -29,6 +95,7 @@ public class Util {
 			for (int i = 0; i < redniBroj; i++) {
 				wavFile.readFrames(buffer, requiredWindowSize);
 			}
+			wavFile.close();
 			return buffer;
 			
 		} catch (Exception e) {
@@ -36,6 +103,22 @@ public class Util {
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	public static double getMinScore(double[] arr, int n) {
+		double min = Double.MAX_VALUE;
+		for (int i = 1; i < n; i++) {
+			if (arr[i] < min) min = arr[i];
+		}
+		return min;
+	}
+	
+	public static double getMaxScore(double[] arr, int n) {
+		double max = Double.MAX_VALUE;
+		for (int i = 1; i < n; i++) {
+			if (arr[i] > max) max = arr[i];
+		}
+		return max;
 	}
 	
 	public static double[] scaleAmps(double[] arr) {

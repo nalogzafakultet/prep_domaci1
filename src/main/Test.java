@@ -1,23 +1,39 @@
 package main;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Arrays;
 
+import util.Util;
+import wav.ReadExample;
 import wav.WavFile;
+import wav.WavFileException;
 
 public class Test {
-	public static void main(String[] args) {
-		double[] window = readWindow("primer.wav", 1, 1);
-		for (int i = 0; i < window.length; i++) {
-			System.out.println(window[i]);
-		}
+	public static void main(String[] args) throws IOException, WavFileException {
+//		PrintWriter pw = new PrintWriter(new File("output.log"));
+//		WavFile wav = WavFile.openWavFile(new File("primer.wav"));
+//		int numOfChannels = wav.getNumChannels();
+//		int sampleRate = (int) wav.getSampleRate();
+//		int total_chunks = (int) wav.getNumFrames();
+//		int windowSize = 5;
+//		int samples_per_window = (sampleRate / 1000 * windowSize * numOfChannels); 
+//		
+//		int total_windows = (int) Math.ceil((double) total_chunks / (sampleRate / 1000 * windowSize));
+//		double[] buffer = new double[samples_per_window];
+//		for (int i = 0; i < total_windows; i++) {
+//			buffer = Util.readWindow("primer.wav", i, 5);
+//		}
+//		pw.close();
 		
-		System.out.println("--- AFTER DFT ----");
-		double[] img = imgArray(window);
-		Fft.getFourier(window, img);
-		for (int i = 0; i < window.length; i++) {
-			System.out.println(window[i]);
-		}
 		
+		
+//		System.out.println("Num of channels: " + numOfChannels);
+//		System.out.println("Sample Rate: " + sampleRate);
+//		System.out.println("Total Chunks: " + total_chunks);
+//		System.out.println("Total windows: " + total_windows);
+//		System.out.println("Buffer len: " + buffer.length);
 	}
 	
 	public static double[] imgArray(double[] buffer) {
