@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.spi.NumberFormatProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -44,7 +45,7 @@ public class MainFrame2 extends JFrame {
 	private Random random;
 
 	private JLabel fLabel;
-	private File file = new File("primer.wav");
+	private File file = new File("assets/please-male.wav");
 	private JLabel wsLabel;
 	// No window - 0, Hamming - 1, Hanning - 2
 	private int windowFunction = 0;
@@ -53,15 +54,18 @@ public class MainFrame2 extends JFrame {
 	private int windowSize;
 	private int number_of_windows;
 	private int numOfChannels;
-	
-	private double arr[];
+	private int total_chunks;
+	private int samples_per_window;
+	private int minFreq;
+	private int total_windows;
 
+	private double arr[];
 
 	private MainFrame2() {
 		setTitle("Prepoznavanje Govora");
 		JPanel jp = new JPanel();
 		jp.setAlignmentX(Component.CENTER_ALIGNMENT);
-		jp.setMaximumSize(new Dimension(400, 100));
+		jp.setMaximumSize(new Dimension(800, 800));
 		jp.setLayout(new BoxLayout(jp, BoxLayout.PAGE_AXIS));
 
 		JPanel wavForm = new JPanel();
@@ -150,37 +154,33 @@ public class MainFrame2 extends JFrame {
 				JOptionPane.showMessageDialog(wavForm, "No file selected", "Error", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			if (wsTextField.getText().isEmpty()|| wsTextField.getText() == null) {
+			if (wsTextField.getText().isEmpty() || wsTextField.getText() == null) {
 				JOptionPane.showMessageDialog(wavForm, "Select window size and number!", "Error",
 						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			
-			
 
 			try {
 				WavFile wav = WavFile.openWavFile(file);
 				numOfChannels = wav.getNumChannels();
 				sampleRate = (int) wav.getSampleRate();
-				int total_chunks = (int) wav.getNumFrames();
+				total_chunks = (int) wav.getNumFrames();
 				windowSize = Integer.parseInt(wsTextField.getText());
 
-				
-				int samples_per_window = (sampleRate / 1000 * windowSize * numOfChannels);
-				int minFreq = 1000 / windowSize;
-				
+				samples_per_window = (sampleRate / 1000 * windowSize * numOfChannels);
+				minFreq = 1000 / windowSize;
+
 				gv.setMaxScore(sampleRate / 2);
 				gv.setMinScore(minFreq);
-				
-				int total_windows = (int) Math.ceil((double) total_chunks / (sampleRate / 1000 * windowSize));
+
+				total_windows = (int) Math.ceil((double) total_chunks / (sampleRate / 1000 * windowSize));
 				double[] arr = new double[samples_per_window];
-				
+
 				scores = new ArrayList<>();
-				System.out.println("Stigao ovde.");
-				
+
 				for (int i = 0; i < total_windows; i++) {
 
-					arr = Util.readWindow(file.getAbsolutePath(), i+1, windowSize);
+					arr = Util.readWindow(file.getAbsolutePath(), i + 1, windowSize);
 					double[] imag = new double[arr.length];
 					int arrSize;
 
@@ -204,19 +204,18 @@ public class MainFrame2 extends JFrame {
 					}
 					// arr[i], img[i]
 					// Math.sqrt(arr[i]^2 + imag[i]^2)
-					
+
 					Fft.getFourier(arr, imag);
 					double minVal = Double.MAX_VALUE;
 					double maxVal = Double.MIN_VALUE;
-					
-					
+
 					for (int j = 2; j < arr.length / 2; j += numOfChannels) {
-						if (arr[j] < minVal) minVal = arr[j];
-						if (arr[j] > maxVal) maxVal = arr[j];
+						if (arr[j] < minVal)
+							minVal = arr[j];
+						if (arr[j] > maxVal)
+							maxVal = arr[j];
 					}
 
-					System.out.println("MIN: " + minVal + ", MAX: " + maxVal);
-					
 					scores.add(new ArrayList<Pair>());
 					for (int j = 2; j < arr.length / 2; j += numOfChannels) {
 						double freq = (j * minFreq) / numOfChannels;
@@ -227,13 +226,10 @@ public class MainFrame2 extends JFrame {
 				}
 				gv.setScores(scores);
 				gv.setWindowSize(windowSize);
-				System.out.println("MIN: " + gv.getMinScore());
-				System.out.println("MAX: " + gv.getMaxScore());
-				
-				System.out.println("CHANNEL NUM: " + numOfChannels);
-				
+
 			} catch (NumberFormatException e1) {
-				JOptionPane.showMessageDialog(wavForm, "Please insert integer value", "Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(wavForm, "Please insert integer value", "Error",
+						JOptionPane.ERROR_MESSAGE);
 				return;
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
@@ -242,7 +238,6 @@ public class MainFrame2 extends JFrame {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			
 
 			jp.revalidate();
 			jp.repaint();
@@ -266,9 +261,78 @@ public class MainFrame2 extends JFrame {
 		JButton bSearch = new JButton("Search");
 
 		bSearch.addActionListener(e -> {
+
+			int fromTime, toTime;
+			try {
+				fromTime = Integer.parseInt(tfFrom.getText());
+				toTime = Integer.parseInt(tfTo.getText());
+			} catch (NumberFormatException ex) {
+				JOptionPane.showMessageDialog(wavForm, "Please insert integer value", "Error",
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
 			
-			System.out.println("HELLO");
+			int fromPtr = fromTime / windowSize;
+			int toPtr = (int) Math.ceil(toTime * 1.0 / windowSize);
 			
+			double[] arr = new double[samples_per_window];
+			scores = new ArrayList<>();
+
+			
+			for (int i = 0; i < (toPtr - fromPtr + 1); i++) {
+				arr = Util.readWindow(file.getAbsolutePath(), i + 1 + fromPtr, windowSize);
+				double[] imag = new double[arr.length];
+				int arrSize;
+
+				switch (windowFunction) {
+				case 0:
+					break;
+				case 1:
+					arrSize = arr.length;
+					for (int k = 0; k < arrSize; k++) {
+						arr[k] *= WindowFunctions.hamming(k, arrSize);
+					}
+					break;
+				case 2:
+					arrSize = arr.length;
+					for (int k = 0; k < arrSize; k++) {
+						arr[k] *= WindowFunctions.hanning(k, arrSize);
+					}
+					break;
+				default:
+					break;
+				}
+				// arr[i], img[i]
+				// Math.sqrt(arr[i]^2 + imag[i]^2)
+
+				Fft.getFourier(arr, imag);
+				double minVal = Double.MAX_VALUE;
+				double maxVal = Double.MIN_VALUE;
+
+				for (int j = 2; j < arr.length / 2; j += numOfChannels) {
+					if (arr[j] < minVal)
+						minVal = arr[j];
+					if (arr[j] > maxVal)
+						maxVal = arr[j];
+				}
+
+				scores.add(new ArrayList<Pair>());
+				for (int j = 2; j < arr.length / 2; j += numOfChannels) {
+					double freq = (j * minFreq) / numOfChannels;
+					double magn = Math.round(((arr[j] - minVal) * 100) / (maxVal - minVal));
+					Pair p = new Pair(freq, magn);
+					scores.get(i).add(p);
+				}
+				
+			}
+			gv.setScores(scores);
+			
+			jp.revalidate();
+			jp.repaint();
+			gv.revalidate();
+			gv.repaint();
+			
+
 		});
 
 		searchPane.add(lFrom);
@@ -281,15 +345,15 @@ public class MainFrame2 extends JFrame {
 		JScrollPane jsp = new JScrollPane(jp);
 		getContentPane().add(jsp);
 
-		setMinimumSize(new Dimension(1200, 800));
+		setMinimumSize(new Dimension(1200, 1200));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
 	}
-	
+
 	public static void setSampleRate(int sampleRate) {
 		MainFrame2.sampleRate = sampleRate;
 	}
-	
+
 	public static MainFrame2 getInstance() {
 		if (instance == null)
 			instance = new MainFrame2();

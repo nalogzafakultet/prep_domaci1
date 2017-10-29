@@ -89,9 +89,6 @@ public static double getMax(String fileName) {
 			int numberOfChannels = wavFile.getNumChannels();
 			
 			int requiredWindowSize = (int)((samplingRate / (1000.0/miliseconds)));
-			System.out.println("Samp/R: " + samplingRate);
-			System.out.println("win size: " + (1000.0/miliseconds));
-			System.out.println(requiredWindowSize * numberOfChannels);
 			
 			double buffer[] = new double[requiredWindowSize * numberOfChannels];
 			
